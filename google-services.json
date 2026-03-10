@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "139472865747",
+    "project_id": "adote-boleto",
+    "storage_bucket": "adote-boleto.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:139472865747:android:84f5948fadb4f2f41a0726",
+        "android_client_info": {
+          "package_name": "com.adoteumboleto.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA48-Vikuf4iaoyi0qJvHzGS3SwhSfchxo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "AdoteBoleto Web",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js", "run", "web"],
+      "port": 8081
+    },
+    {
+      "name": "AdoteBoleto Dev",
+      "runtimeExecutable": "C:\\Program Files\\nodejs\\npm.cmd",
+      "runtimeArgs": ["start"],
+      "port": 8081
+    }
+  ]
+}

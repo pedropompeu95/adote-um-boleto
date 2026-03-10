@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Claude_Preview__preview_start",
+      "Bash(cmd //c \"where npm\")",
+      "Bash(file:*)",
+      "Bash(python3:*)",
+      "Bash(netstat -ano)",
+      "Bash(node -e \"const p = require\\(''/c/Users/Dell/AdoteBoleto/node_modules/pngjs''\\); console.log\\(typeof p.PNG, typeof p.PNG.sync\\)\")",
+      "Bash(node -e \"const p = require\\(''pngjs''\\); console.log\\(typeof p.PNG, typeof p.PNG.sync\\)\")",
+      "Bash(node generate-assets.js)",
+      "Bash(npx expo install expo-notifications)",
+      "Bash(npx expo install @sentry/react-native)",
+      "Bash(node \"C:\\\\Users\\\\Dell\\\\AdoteBoleto\\\\scripts\\\\gerar-assets.js\")",
+      "Bash(firebase --version)",
+      "Bash(firebase projects:list)",
+      "Bash(firebase use adote-boleto)",
+      "Bash(firebase deploy --only firestore:rules,firestore:indexes,storage)"
+    ]
+  }
+}

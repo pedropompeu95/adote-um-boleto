@@ -1,0 +1,90 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Usuários ──────────────────────────────────────────────────────────
+    match /usuarios/{userId} {
+      // Cada usuário lê e escreve apenas o próprio documento
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId;
+    }
+
+    // ── Boletos ───────────────────────────────────────────────────────────
+    match /boletos/{boletoId} {
+
+      // Leitura pública para autenticados com e-mail verificado
+      allow read: if request.auth != null
+        && request.auth.token.email_verified == true;
+
+      // Criação: somente o próprio beneficiário, com e-mail verificado,
+      // e com campos obrigatórios em valores iniciais corretos
+      allow create: if request.auth != null
+        && request.auth.token.email_verified == true
+        && request.resource.data.beneficiarioId == request.auth.uid
+        && request.resource.data.valorTotal > 0
+        && request.resource.data.valorArrecadado == 0
+        && request.resource.data.numDoacoes == 0
+        && request.resource.data.status == 'ativo';
+
+      // Atualização — dois casos distintos:
+      allow update: if request.auth != null
+        && request.auth.token.email_verified == true
+        && (
+          // Caso 1: dono do boleto pode editar campos editáveis
+          // (não pode mudar beneficiarioId, valorArrecadado ou numDoacoes)
+          (
+            resource.data.beneficiarioId == request.auth.uid
+            && !request.resource.data.diff(resource.data)
+                  .affectedKeys().hasAny(['beneficiarioId', 'valorArrecadado', 'numDoacoes'])
+          )
+          ||
+          // Caso 2: doador pode apenas incrementar valorArrecadado/numDoacoes
+          // e opcionalmente setar status='pago' quando a meta é atingida
+          (
+            resource.data.beneficiarioId != request.auth.uid
+            && resource.data.status == 'ativo'
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['valorArrecadado', 'numDoacoes', 'status'])
+            && request.resource.data.valorArrecadado > resource.data.valorArrecadado
+            && request.resource.data.numDoacoes == resource.data.numDoacoes + 1
+            && (
+              // status não mudou, ou só pode mudar para 'pago'
+              !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status'])
+              || request.resource.data.status == 'pago'
+            )
+          )
+        );
+
+      // Deleção física proibida — usa status 'cancelado'
+      allow delete: if false;
+    }
+
+    // ── Doações ───────────────────────────────────────────────────────────
+    match /doacoes/{doacaoId} {
+
+      // Doador lê apenas suas próprias doações
+      allow read: if request.auth != null
+        && resource.data.doadorId == request.auth.uid;
+
+      // Criação: doadorId deve ser o próprio uid, valor positivo
+      allow create: if request.auth != null
+        && request.auth.token.email_verified == true
+        && request.resource.data.doadorId == request.auth.uid
+        && request.resource.data.valor > 0;
+
+      // Doações são imutáveis após criadas
+      allow update, delete: if false;
+    }
+
+    // ── Denúncias ─────────────────────────────────────────────────────────
+    match /denuncias/{denunciaId} {
+
+      allow create: if request.auth != null
+        && request.auth.token.email_verified == true
+        && request.resource.data.denuncianteId == request.auth.uid;
+
+      // Leitura/edição/exclusão apenas via Admin SDK (backend)
+      allow read, update, delete: if false;
+    }
+  }
+}

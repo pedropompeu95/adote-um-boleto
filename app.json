@@ -1,0 +1,80 @@
+{
+  "expo": {
+    "name": "Adote um Boleto",
+    "slug": "adote-um-boleto",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "scheme": "adoteumboleto",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f0f1a"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.adoteumboleto.app",
+      "buildNumber": "1",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "remote-notification"
+        ],
+        "NSPhotoLibraryUsageDescription": "Precisamos acessar sua galeria para você enviar a foto do boleto.",
+        "NSCameraUsageDescription": "Precisamos acessar sua câmera para você fotografar o boleto."
+      }
+    },
+    "android": {
+      "package": "com.adoteumboleto.app",
+      "versionCode": 1,
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0f0f1a"
+      },
+      "permissions": [
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "plugins": [
+      "@sentry/react-native",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Precisamos acessar sua galeria para você enviar a foto do boleto.",
+          "cameraPermission": "Precisamos acessar sua câmera para você fotografar o boleto."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#e94560",
+          "defaultChannel": "default"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "50876b5d-b0e2-4029-8eec-2971485c86d1"
+      }
+    },
+    "owner": "pompeupedro"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "boletos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "beneficiarioId", "order": "ASCENDING" },
+        { "fieldPath": "status",         "order": "ASCENDING" },
+        { "fieldPath": "criadoEm",       "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "doacoes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "doadorId",  "order": "ASCENDING" },
+        { "fieldPath": "criadoEm", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
