@@ -3,13 +3,14 @@ import {
   View, Text, StyleSheet, TouchableOpacity,
   TextInput, Alert, ScrollView, Image, Clipboard, Share, ActivityIndicator
 } from "react-native";
+import SuccessOverlay from "../components/SuccessOverlay";
 import {
   doc, runTransaction, addDoc, collection, serverTimestamp,
   getDoc, updateDoc,
 } from "firebase/firestore";
 import { db, auth } from "../config/firebase";
 import { mapFirebaseError } from "../utils/firebaseErrors";
-import { notificarDonoBoleto } from "../utils/notifications";
+import { notificarDonoBoleto, notificarMeta100 } from "../utils/notifications";
 import { logEvento } from "../utils/analytics";
 
 export default function BoletoDetailScreen({ route, navigation }) {
@@ -18,6 +19,7 @@ export default function BoletoDetailScreen({ route, navigation }) {
   const [loadingBoleto, setLoadingBoleto] = useState(!route.params?.boleto);
   const [valor, setValor] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sucesso, setSucesso] = useState(null); // { valorStr } quando mostra overlay
 
   const isOwner = auth.currentUser?.uid === boleto?.beneficiarioId;
 
@@ -162,12 +164,17 @@ export default function BoletoDetailScreen({ route, navigation }) {
         });
       });
 
-      // Notifica o dono do boleto em background (não bloqueia)
-      notificarDonoBoleto(boleto.beneficiarioId, v);
+      // Notificação: 100% atingido ou doação parcial
+      const atingiuMeta = (atual.valorArrecadado || 0) + v >= atual.valorTotal;
+      if (atingiuMeta) {
+        notificarMeta100(boleto.beneficiarioId);
+      } else {
+        notificarDonoBoleto(boleto.beneficiarioId, v);
+      }
 
       logEvento("doacao_realizada", { valor: v, tipo: boleto.tipo });
-      Alert.alert("✅ Doação registrada!", `Você contribuiu com R$ ${v.toFixed(2)}. Obrigado!`);
-      navigation.goBack();
+      // Mostra overlay animado de sucesso (onDismiss navega para trás)
+      setSucesso({ valorStr: v.toFixed(2) });
     } catch (e) {
       Alert.alert("Erro ao registrar doação", mapFirebaseError(e));
     }
@@ -175,6 +182,7 @@ export default function BoletoDetailScreen({ route, navigation }) {
   }
 
   return (
+    <View style={{ flex: 1 }}>
     <ScrollView style={styles.container}>
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -294,6 +302,16 @@ export default function BoletoDetailScreen({ route, navigation }) {
         </TouchableOpacity>
       )}
     </ScrollView>
+    {sucesso && (
+      <SuccessOverlay
+        valor={sucesso.valorStr}
+        onDismiss={() => {
+          setSucesso(null);
+          navigation.goBack();
+        }}
+      />
+    )}
+    </View>
   );
 }
 

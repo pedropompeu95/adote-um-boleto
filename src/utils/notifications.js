@@ -51,31 +51,57 @@ export async function registrarPushToken(uid) {
 }
 
 /**
+ * Helper interno — busca o pushToken de um usuário e envia uma mensagem.
+ */
+async function enviarPush(beneficiarioId, titulo, corpo, dados = {}) {
+  const snap = await getDoc(doc(db, "usuarios", beneficiarioId));
+  const pushToken = snap.data()?.pushToken;
+  if (!pushToken || !pushToken.startsWith("ExponentPushToken")) return;
+
+  await fetch("https://exp.host/--/api/v2/push/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Accept": "application/json" },
+    body: JSON.stringify({
+      to: pushToken,
+      title: titulo,
+      body: corpo,
+      sound: "default",
+      data: dados,
+    }),
+  });
+}
+
+/**
  * Envia notificação push para o dono do boleto via Expo Push Service.
  * Chamado pelo cliente do doador após uma doação bem-sucedida.
  */
 export async function notificarDonoBoleto(beneficiarioId, valor) {
   try {
     if (Platform.OS === "web") return;
-
-    const snap = await getDoc(doc(db, "usuarios", beneficiarioId));
-    const pushToken = snap.data()?.pushToken;
-    if (!pushToken || !pushToken.startsWith("ExponentPushToken")) return;
-
-    await fetch("https://exp.host/--/api/v2/push/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-      },
-      body: JSON.stringify({
-        to: pushToken,
-        title: "💙 Nova doação recebida!",
-        body: `Você recebeu uma contribuição de R$ ${valor.toFixed(2)} no seu boleto.`,
-        sound: "default",
-      }),
-    });
+    await enviarPush(
+      beneficiarioId,
+      "💙 Nova doação recebida!",
+      `Você recebeu uma contribuição de R$ ${valor.toFixed(2)} no seu boleto.`
+    );
   } catch (_) {
     // Silencia: falha de notificação não deve afetar o fluxo de doação
+  }
+}
+
+/**
+ * Envia notificação especial quando o boleto atinge 100% da meta.
+ * Chamado quando novoTotal >= valorTotal na transação de doação.
+ */
+export async function notificarMeta100(beneficiarioId) {
+  try {
+    if (Platform.OS === "web") return;
+    await enviarPush(
+      beneficiarioId,
+      "🎉 Meta atingida!",
+      "Seu boleto foi totalmente financiado! Abra o app para confirmar o recebimento.",
+      { tipo: "meta100" }
+    );
+  } catch (_) {
+    // Silencia: não deve afetar o fluxo de doação
   }
 }

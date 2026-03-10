@@ -30,10 +30,79 @@ function dataValida(vencimento) {
   );
 }
 
-// Boleto bancário: 47 dígitos | Concessionária/arrecadação: 48 dígitos
+// ── Validação de linha digitável ──────────────────────────────────────────
+
+/** Módulo 10: usado nos campos do boleto bancário (linha digitável 47 dígitos) */
+function mod10(digitos) {
+  let soma = 0, mult = 2;
+  for (let i = digitos.length - 1; i >= 0; i--) {
+    const v = digitos[i] * mult;
+    soma += v > 9 ? v - 9 : v;
+    mult = mult === 2 ? 1 : 2;
+  }
+  return (10 - (soma % 10)) % 10;
+}
+
+/** Módulo 11: usado em boletos de concessionária (48 dígitos) */
+function mod11(digitos) {
+  const pesos = [2, 3, 4, 5, 6, 7, 8, 9];
+  let soma = 0;
+  for (let i = digitos.length - 1, p = 0; i >= 0; i--, p = (p + 1) % 8) {
+    soma += digitos[i] * pesos[p];
+  }
+  const r = soma % 11;
+  return r === 0 || r === 1 ? 1 : 11 - r;
+}
+
+/**
+ * Valida a linha digitável do boleto.
+ * Retorna { valido: true } ou { valido: false, mensagem: string }.
+ *
+ * - 47 dígitos (bancário): valida dígito verificador dos 3 campos via módulo 10
+ * - 48 dígitos (concessionária): valida dígito geral via módulo 11
+ * - 44-46 dígitos: apenas comprimento (código de barras ou variações)
+ */
 function validarCodigoBoleto(codigo) {
   const nums = codigo.replace(/\D/g, "");
-  return nums.length >= 44 && nums.length <= 48;
+
+  if (nums.length < 44 || nums.length > 48) {
+    return {
+      valido: false,
+      mensagem: `O código deve ter entre 44 e 48 dígitos (você digitou ${nums.length}). Copie a linha digitável diretamente do seu banco.`,
+    };
+  }
+
+  // Todos iguais = código falso óbvio
+  if (/^(.)\1+$/.test(nums)) {
+    return { valido: false, mensagem: "Código de boleto inválido. Verifique e tente novamente." };
+  }
+
+  // Boleto bancário: linha digitável com 47 dígitos
+  if (nums.length === 47) {
+    const d = nums.split("").map(Number);
+    if (mod10(d.slice(0, 9)) !== d[9]) {
+      return { valido: false, mensagem: "Dígito verificador inválido no 1º campo. Confira se copiou todos os números corretamente." };
+    }
+    if (mod10(d.slice(10, 20)) !== d[20]) {
+      return { valido: false, mensagem: "Dígito verificador inválido no 2º campo. Confira se copiou todos os números corretamente." };
+    }
+    if (mod10(d.slice(21, 31)) !== d[31]) {
+      return { valido: false, mensagem: "Dígito verificador inválido no 3º campo. Confira se copiou todos os números corretamente." };
+    }
+    return { valido: true };
+  }
+
+  // Concessionária/arrecadação: 48 dígitos (check no índice 3)
+  if (nums.length === 48) {
+    const d = nums.split("").map(Number);
+    const dados = [...d.slice(0, 3), ...d.slice(4)];
+    if (mod11(dados) !== d[3]) {
+      return { valido: false, mensagem: "Dígito verificador inválido. Confira se copiou todos os números corretamente." };
+    }
+    return { valido: true };
+  }
+
+  return { valido: true };
 }
 
 // Formata em grupos de 10 para leitura (ex: NNNNNNNNNN NNNNNNNNNN ...)
@@ -72,11 +141,9 @@ export default function CadastrarBoletoScreen() {
       return;
     }
 
-    if (!validarCodigoBoleto(codigoBoleto)) {
-      Alert.alert(
-        "Código inválido",
-        "A linha digitável deve ter entre 44 e 48 dígitos. Copie o código diretamente do seu banco ou da conta impressa."
-      );
+    const validacao = validarCodigoBoleto(codigoBoleto);
+    if (!validacao.valido) {
+      Alert.alert("Código inválido", validacao.mensagem);
       return;
     }
 
